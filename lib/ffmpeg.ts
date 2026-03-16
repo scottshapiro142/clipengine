@@ -12,14 +12,25 @@ export function clipToShorts(
   inputPath: string,
   outputPath: string,
   startTime: number,
-  duration: number
+  duration: number,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    // TODO: Add crop filter for 9:16 aspect ratio based on source dimensions
+    if (!Number.isFinite(startTime) || startTime < 0) {
+      reject(new Error("startTime must be a non-negative number"));
+      return;
+    }
+
+    if (!Number.isFinite(duration) || duration <= 0) {
+      reject(new Error("duration must be a positive number"));
+      return;
+    }
+
+    const clippedDuration = Math.min(duration, 60);
+
     ffmpeg(inputPath)
       .setStartTime(startTime)
-      .setDuration(Math.min(duration, 60))
-      .videoFilters("crop=ih*9/16:ih") // center-crop to 9:16
+      .setDuration(clippedDuration)
+      .videoFilters("crop=ih*9/16:ih")
       .output(outputPath)
       .on("end", () => resolve())
       .on("error", (err) => reject(err))
